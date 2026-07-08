@@ -2,15 +2,14 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'   // Name must match a Maven installation configured in
-                         // Manage Jenkins > Tools
+        maven 'Maven3'
     }
 
     environment {
         IMAGE_NAME = "devops-cicd-lab"
         IMAGE_TAG  = "${env.BUILD_NUMBER}"
         CONTAINER_NAME = "devops-cicd-lab-container"
-        DOCKERHUB_CREDS = credentials('dockerhub-creds') // configured in Jenkins credentials store
+        DOCKERHUB_CREDS = credentials('dockerhub-creds')
         DOCKERHUB_REPO  = "deepikaashok/devops-cicd-lab"
     }
 
@@ -49,21 +48,17 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    dockerImage = docker.build("${IMAGE_NAME}:${IMAGE_TAG}")
-                }
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    sh "echo ${DOCKERHUB_CREDS_PSW} | docker login -u ${DOCKERHUB_CREDS_USR} --password-stdin"
-                    sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${DOCKERHUB_REPO}:${IMAGE_TAG}"
-                    sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${DOCKERHUB_REPO}:latest"
-                    sh "docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}"
-                    sh "docker push ${DOCKERHUB_REPO}:latest"
-                }
+                sh "echo ${DOCKERHUB_CREDS_PSW} | docker login -u ${DOCKERHUB_CREDS_USR} --password-stdin"
+                sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+                sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${DOCKERHUB_REPO}:latest"
+                sh "docker push ${DOCKERHUB_REPO}:${IMAGE_TAG}"
+                sh "docker push ${DOCKERHUB_REPO}:latest"
             }
         }
 
@@ -71,7 +66,7 @@ pipeline {
             steps {
                 sh """
                     docker rm -f ${CONTAINER_NAME} || true
-                    docker run -d --name ${CONTAINER_NAME} -p 8080:8080 ${IMAGE_NAME}:${IMAGE_TAG}
+                    docker run -d --name ${CONTAINER_NAME} ${IMAGE_NAME}:${IMAGE_TAG}
                 """
             }
         }
